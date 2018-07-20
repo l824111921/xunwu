@@ -1,22 +1,8 @@
-package com.demo.entity;
+package com.demo.web.dto;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
-@Entity
-@Table(name = "subway")
-public class Subway {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class SubwayDTO {
     private Long id;
-
     private String name;
-
-    @Column(name = "city_en_name")
     private String cityEnName;
 
     public Long getId() {
