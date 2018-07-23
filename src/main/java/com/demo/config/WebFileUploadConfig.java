@@ -51,7 +51,7 @@ public class WebFileUploadConfig {
 
     @Bean
     public com.qiniu.storage.Configuration qiniuConfig() {
-        return new com.qiniu.storage.Configuration(Zone.zone0());
+        return new com.qiniu.storage.Configuration(Zone.zone2());
     }
 
     @Bean

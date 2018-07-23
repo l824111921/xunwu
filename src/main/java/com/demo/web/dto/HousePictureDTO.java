@@ -1,32 +1,21 @@
-package com.demo.entity;
+package com.demo.web.dto;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Entity
-@Table(name = "house_picture")
-public class HousePicture {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class HousePictureDTO {
     private Long id;
 
-    @Column(name = "house_id")
+    @JsonProperty(value = "house_id")
     private Long houseId;
 
     private String path;
 
-    @Column(name = "cdn_prefix")
+    @JsonProperty(value = "cdn_prefix")
     private String cdnPrefix;
 
     private int width;
 
     private int height;
-
-    private String location;
 
     public Long getId() {
         return id;
@@ -76,11 +65,15 @@ public class HousePicture {
         this.height = height;
     }
 
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
+    @Override
+    public String toString() {
+        return "HousePictureDTO{" +
+                "id=" + id +
+                ", houseId=" + houseId +
+                ", path='" + path + '\'' +
+                ", cdnPrefix='" + cdnPrefix + '\'' +
+                ", width=" + width +
+                ", height=" + height +
+                '}';
     }
 }

@@ -1,65 +1,27 @@
-package com.demo.entity;
+package com.demo.web.dto;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
-@Entity
-@Table(name = "house_detail")
-public class HouseDetail {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "house_id")
-    private Long houseId;
-
+public class HouseDetailDTO {
     private String description;
 
-    @Column(name = "layout_desc")
     private String layoutDesc;
 
     private String traffic;
 
-    @Column(name = "round_service")
     private String roundService;
 
-    @Column(name = "rent_way")
     private int rentWay;
 
-    @Column(name = "address")
-    private String detailAddress;
+    private Long adminId;
 
-    @Column(name = "subway_line_id")
+    private String address;
+
     private Long subwayLineId;
 
-    @Column(name = "subway_station_id")
     private Long subwayStationId;
 
-    @Column(name = "subway_line_name")
     private String subwayLineName;
 
-    @Column(name = "subway_station_name")
     private String subwayStationName;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getHouseId() {
-        return houseId;
-    }
-
-    public void setHouseId(Long houseId) {
-        this.houseId = houseId;
-    }
 
     public String getDescription() {
         return description;
@@ -101,12 +63,20 @@ public class HouseDetail {
         this.rentWay = rentWay;
     }
 
-    public String getDetailAddress() {
-        return detailAddress;
+    public Long getAdminId() {
+        return adminId;
     }
 
-    public void setDetailAddress(String detailAddress) {
-        this.detailAddress = detailAddress;
+    public void setAdminId(Long adminId) {
+        this.adminId = adminId;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public Long getSubwayLineId() {

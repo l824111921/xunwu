@@ -3,6 +3,7 @@ package com.demo.service.house;
 import com.demo.entity.SupportAddress;
 import com.demo.service.ServiceMultiResult;
 import com.demo.web.dto.SubwayDTO;
+import com.demo.web.dto.SubwayStationDTO;
 import com.demo.web.dto.SupportAddressDTO;
 
 import java.util.List;
@@ -41,5 +42,7 @@ public interface IAddressService {
      * @return
      */
     List<SubwayDTO> findAllSubwayByCity(String cityEnName);
+
+    List<SubwayStationDTO> findAllStationBySubway(Long subwayId);
 
 }
