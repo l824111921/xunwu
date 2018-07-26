@@ -67,7 +67,7 @@ public class HouseController {
     @Bean
     public MultipartConfigElement multipartConfigElement() {
         MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setLocation("E:\\IdeaProjects\\xunwu-project\\tmp\\");
+        factory.setLocation("E:\\IdeaProjects\\xunwu\\tmp\\");
         return factory.createMultipartConfig();
     }
 

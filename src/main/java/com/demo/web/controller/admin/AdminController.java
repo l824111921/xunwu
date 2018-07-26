@@ -1,14 +1,15 @@
 package com.demo.web.controller.admin;
 
+import com.demo.base.ApiDataTableResponse;
 import com.demo.base.ApiResponse;
 import com.demo.entity.SupportAddress;
+import com.demo.service.ServiceMultiResult;
 import com.demo.service.ServiceResult;
 import com.demo.service.house.IAddressService;
 import com.demo.service.house.IHouseService;
 import com.demo.service.house.IQiNiuService;
-import com.demo.web.dto.HouseDTO;
-import com.demo.web.dto.QiNiuPutRet;
-import com.demo.web.dto.SupportAddressDTO;
+import com.demo.web.dto.*;
+import com.demo.web.form.DatatableSearch;
 import com.demo.web.form.HouseForm;
 import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -80,6 +82,18 @@ public class AdminController {
         return "admin/house-add";
     }
 
+    @PostMapping("admin/houses")
+    @ResponseBody
+    public ApiDataTableResponse houses(@ModelAttribute DatatableSearch searchBody) {
+        ServiceMultiResult<HouseDTO> result = houseService.adminQuery(searchBody);
+        ApiDataTableResponse response = new ApiDataTableResponse(ApiResponse.Status.SUCCESS);
+        response.setData(result.getResult());
+        response.setRecordsFiltered(result.getTotal());
+        response.setRecordsTotal(result.getTotal());
+        response.setDraw(searchBody.getDraw());
+        return response;
+    }
+
     /**
      * 上传图片接口
      *
@@ -136,5 +150,35 @@ public class AdminController {
         return ApiResponse.ofSuccess(ApiResponse.Status.NOT_FOUND);
     }
 
+    @GetMapping("admin/house/edit")
+    public String houseEditPage(@RequestParam(value = "id") Long id, Model model) {
+        if (id == null || id < 1) {
+            return "404";
+        }
+        ServiceResult<HouseDTO> serviceResult = houseService.findCompleteOne(id);
+
+        if (!serviceResult.isSuccess()) {
+            return "404";
+        }
+
+        HouseDTO result = serviceResult.getResult();
+        model.addAttribute("house", result);
+        Map<SupportAddress.Level, SupportAddressDTO> addressMap = addressService.findCityAndRegion(result.getCityEnName(),
+                result.getRegionEnName());
+        model.addAttribute("city", addressMap.get(SupportAddress.Level.CITY));
+        model.addAttribute("region", addressMap.get(SupportAddress.Level.REGION));
+
+        HouseDetailDTO detailDTO = result.getHouseDetail();
+        ServiceResult<SubwayDTO> subwayServiceResult = addressService.findSubway(detailDTO.getSubwayLineId());
+        if (subwayServiceResult.isSuccess()) {
+            model.addAttribute("subway", subwayServiceResult.getResult());
+        }
+        ServiceResult<SubwayStationDTO> subwayStationServiceResult = addressService.findSubwayStation(
+                detailDTO.getSubwayStationId());
+        if (subwayStationServiceResult.isSuccess()) {
+            model.addAttribute("station", subwayStationServiceResult.getResult());
+        }
+        return "admin/house-edit";
+    }
 
 }

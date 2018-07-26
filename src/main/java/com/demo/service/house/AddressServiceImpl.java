@@ -8,6 +8,7 @@ import com.demo.repository.SubwayRepository;
 import com.demo.repository.SubwayStationRepository;
 import com.demo.repository.SupportAddressRepository;
 import com.demo.service.ServiceMultiResult;
+import com.demo.service.ServiceResult;
 import com.demo.web.dto.SubwayDTO;
 import com.demo.web.dto.SubwayStationDTO;
 import com.demo.web.dto.SupportAddressDTO;
@@ -90,5 +91,29 @@ public class AddressServiceImpl implements IAddressService {
         }
         stations.forEach(station -> result.add(modelMapper.map(station, SubwayStationDTO.class)));
         return result;
+    }
+
+    @Override
+    public ServiceResult<SubwayDTO> findSubway(Long subwayId) {
+        if (subwayId == null) {
+            return ServiceResult.notFound();
+        }
+        Subway subway = subwayRepository.findOne(subwayId);
+        if (subway == null) {
+            return ServiceResult.notFound();
+        }
+        return ServiceResult.of(modelMapper.map(subway, SubwayDTO.class));
+    }
+
+    @Override
+    public ServiceResult<SubwayStationDTO> findSubwayStation(Long stationId) {
+        if (stationId == null) {
+            return ServiceResult.notFound();
+        }
+        SubwayStation station = subwayStationRepository.findOne(stationId);
+        if (station == null) {
+            return ServiceResult.notFound();
+        }
+        return ServiceResult.of(modelMapper.map(station, SubwayStationDTO.class));
     }
 }

@@ -2,6 +2,7 @@ package com.demo.service.house;
 
 import com.demo.entity.SupportAddress;
 import com.demo.service.ServiceMultiResult;
+import com.demo.service.ServiceResult;
 import com.demo.web.dto.SubwayDTO;
 import com.demo.web.dto.SubwayStationDTO;
 import com.demo.web.dto.SupportAddressDTO;
@@ -44,5 +45,22 @@ public interface IAddressService {
     List<SubwayDTO> findAllSubwayByCity(String cityEnName);
 
     List<SubwayStationDTO> findAllStationBySubway(Long subwayId);
+
+
+    /**
+     * 获取地铁线信息
+     *
+     * @param subwayId
+     * @return
+     */
+    ServiceResult<SubwayDTO> findSubway(Long subwayId);
+
+    /**
+     * 获取地铁站点信息
+     *
+     * @param stationId
+     * @return
+     */
+    ServiceResult<SubwayStationDTO> findSubwayStation(Long stationId);
 
 }
