@@ -2,6 +2,8 @@ package com.demo.web.controller.admin;
 
 import com.demo.base.ApiDataTableResponse;
 import com.demo.base.ApiResponse;
+import com.demo.base.HouseOperation;
+import com.demo.base.HouseStatus;
 import com.demo.entity.SupportAddress;
 import com.demo.service.ServiceMultiResult;
 import com.demo.service.ServiceResult;
@@ -14,6 +16,7 @@ import com.demo.web.form.HouseForm;
 import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
+import org.elasticsearch.common.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
@@ -179,6 +182,108 @@ public class AdminController {
             model.addAttribute("station", subwayStationServiceResult.getResult());
         }
         return "admin/house-edit";
+    }
+
+    @PostMapping("admin/house/edit")
+    @ResponseBody
+    public ApiResponse saveHouse(@Valid @ModelAttribute("form-house-edit") HouseForm houseForm, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return new ApiResponse(HttpStatus.BAD_REQUEST.value(), bindingResult.getAllErrors().get(0).getDefaultMessage(), null);
+        }
+        Map<SupportAddress.Level, SupportAddressDTO> addressMap = addressService.findCityAndRegion(houseForm.getCityEnName(), houseForm.getRegionEnName());
+        if (addressMap.keySet().size() != 2) {
+            return ApiResponse.ofSuccess(ApiResponse.Status.NOT_VALID_PARAM);
+        }
+        ServiceResult result = houseService.update(houseForm);
+        if (result.isSuccess()) {
+            return ApiResponse.ofSuccess(null);
+        }
+        ApiResponse response = ApiResponse.ofStatus(ApiResponse.Status.BAD_REQUEST);
+        response.setMessage(result.getMessage());
+        return response;
+    }
+
+    @DeleteMapping("admin/house/photo")
+    @ResponseBody
+    public ApiResponse removeHousePhoto(@RequestParam(value = "id") Long id) {
+        ServiceResult result = houseService.removePhoto(id);
+        if (result.isSuccess()) {
+            return ApiResponse.ofStatus(ApiResponse.Status.SUCCESS);
+        } else {
+            return ApiResponse.ofMessage(HttpStatus.BAD_REQUEST.value(), result.getMessage());
+        }
+    }
+
+    @PostMapping("admin/house/cover")
+    @ResponseBody
+    public ApiResponse updateCover(@RequestParam(value = "cover_id") Long coverId, @RequestParam(value = "target_id") Long targetId) {
+        ServiceResult result = houseService.updateCover(coverId, targetId);
+        if (result.isSuccess()) {
+            return ApiResponse.ofStatus(ApiResponse.Status.SUCCESS);
+        } else {
+            return ApiResponse.ofMessage(HttpStatus.BAD_REQUEST.value(), result.getMessage());
+        }
+    }
+
+    @PostMapping("admin/house/tag")
+    @ResponseBody
+    public ApiResponse addHouseTag(@RequestParam(value = "house_id") Long houseId,
+                                   @RequestParam(value = "tag") String tag) {
+        if (houseId < 1 || Strings.isNullOrEmpty(tag)) {
+            return ApiResponse.ofStatus(ApiResponse.Status.BAD_REQUEST);
+        }
+        ServiceResult result = houseService.addTag(houseId, tag);
+        if (result.isSuccess()) {
+            return ApiResponse.ofStatus(ApiResponse.Status.SUCCESS);
+        } else {
+            return ApiResponse.ofMessage(HttpStatus.BAD_REQUEST.value(), result.getMessage());
+        }
+    }
+
+    @DeleteMapping("admin/house/tag")
+    @ResponseBody
+    public ApiResponse removeTag(@RequestParam(value = "house_id") Long houseId,
+                                 @RequestParam(value = "tag") String tag) {
+        if (houseId < 1 || Strings.isNullOrEmpty(tag)) {
+            return ApiResponse.ofStatus(ApiResponse.Status.BAD_REQUEST);
+        }
+        ServiceResult result = houseService.removeTag(houseId, tag);
+        if (result.isSuccess()) {
+            return ApiResponse.ofStatus(ApiResponse.Status.SUCCESS);
+        } else {
+            return ApiResponse.ofMessage(HttpStatus.BAD_REQUEST.value(), result.getMessage());
+        }
+    }
+
+    @PutMapping("admin/house/operate/{id}/{operation}")
+    @ResponseBody
+    public ApiResponse operateHouse(@PathVariable(value = "id") Long id,
+                                    @PathVariable(value = "operation") int operation) {
+        if (id < 0) {
+            return ApiResponse.ofStatus(ApiResponse.Status.NOT_VALID_PARAM);
+        }
+        ServiceResult result;
+        switch (operation) {
+            case HouseOperation.PASS:
+                result = houseService.updateStatus(id, HouseStatus.PASSES.getValue());
+                break;
+            case HouseOperation.PULL_OUT:
+                result = houseService.updateStatus(id, HouseStatus.NOT_AUDITED.getValue());
+                break;
+            case HouseOperation.DELETE:
+                result = houseService.updateStatus(id, HouseStatus.DELETED.getValue());
+                break;
+            case HouseOperation.RENT:
+                result = houseService.updateStatus(id, HouseStatus.RENTED.getValue());
+                break;
+            default:
+                return ApiResponse.ofStatus(ApiResponse.Status.BAD_REQUEST);
+        }
+
+        if (result.isSuccess()) {
+            return ApiResponse.ofSuccess(null);
+        }
+        return ApiResponse.ofMessage(HttpStatus.BAD_REQUEST.value(), result.getMessage());
     }
 
 }

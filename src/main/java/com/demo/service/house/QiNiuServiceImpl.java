@@ -55,7 +55,12 @@ public class QiNiuServiceImpl implements IQiNiuService, InitializingBean {
 
     @Override
     public Response delete(String key) throws QiniuException {
-        return null;
+        Response response = bucketManager.delete(bucket, key);
+        int retry = 0;
+        while (response.needRetry() && retry++ < 3) {
+            response = bucketManager.delete(bucket, key);
+        }
+        return response;
     }
 
     @Override

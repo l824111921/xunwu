@@ -12,6 +12,8 @@ import com.demo.web.dto.HousePictureDTO;
 import com.demo.web.form.DatatableSearch;
 import com.demo.web.form.HouseForm;
 import com.demo.web.form.PhotoForm;
+import com.qiniu.common.QiniuException;
+import com.qiniu.http.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
@@ -53,6 +56,9 @@ public class HouseServiceImpl implements IHouseService {
 
     @Autowired
     private HouseSubscribeRespository subscribeRespository;
+
+    @Autowired
+    private IQiNiuService qiNiuService;
 
     @Value("${qiniu.cdn.prefix}")
     private String cdnPrefix;
@@ -102,8 +108,37 @@ public class HouseServiceImpl implements IHouseService {
     }
 
     @Override
+    @Transactional
     public ServiceResult update(HouseForm houseForm) {
-        return null;
+        House house = houseRepository.findOne(houseForm.getId());
+        if (house == null) {
+            return ServiceResult.notFound();
+        }
+        HouseDetail detail = houseDetailRepository.findByHouseId(house.getId());
+        if (detail == null) {
+            return ServiceResult.notFound();
+        }
+        ServiceResult wrapperResult = wrapperDetailInfo(detail, houseForm);
+        if (wrapperResult != null) {
+            return wrapperResult;
+        }
+
+        houseDetailRepository.save(detail);
+
+        List<HousePicture> pictures = generatePictures(houseForm, houseForm.getId());
+        housePictureRepository.save(pictures);
+
+        if (houseForm.getCover() == null) {
+            houseForm.setCover(house.getCover());
+        }
+        modelMapper.map(houseForm, house);
+        house.setLastUpdateTime(new Date());
+        houseRepository.save(house);
+
+        if (house.getStatus() == HouseStatus.PASSES.getValue()) {
+
+        }
+        return ServiceResult.success();
     }
 
     @Override
@@ -185,6 +220,88 @@ public class HouseServiceImpl implements IHouseService {
             }
         }
         return ServiceResult.of(result);
+    }
+
+    @Override
+    public ServiceResult removePhoto(Long id) {
+        HousePicture picture = housePictureRepository.findOne(id);
+        if (picture == null) {
+            return ServiceResult.notFound();
+        }
+
+        try {
+            Response response = qiNiuService.delete(picture.getPath());
+            if (response.isOK()) {
+                housePictureRepository.delete(id);
+                return ServiceResult.success();
+            } else {
+                return new ServiceResult(false, response.error);
+            }
+        } catch (QiniuException e) {
+            e.printStackTrace();
+            return new ServiceResult(false, e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public ServiceResult updateCover(Long coverId, Long targetId) {
+        HousePicture picture = housePictureRepository.findOne(coverId);
+        if (picture == null) {
+            return ServiceResult.notFound();
+        }
+        houseRepository.updateCover(targetId, picture.getPath());
+        return ServiceResult.success();
+    }
+
+    @Override
+    @Transactional
+    public ServiceResult addTag(Long houseId, String tag) {
+        House house = houseRepository.findOne(houseId);
+        if (house == null) {
+            return ServiceResult.notFound();
+        }
+        HouseTag houseTag = houseTagRepository.findByNameAndHouseId(tag, houseId);
+        if (houseTag != null) {
+            return new ServiceResult(false, "标签已存在");
+        }
+        houseTagRepository.save(new HouseTag(houseId, tag));
+        return ServiceResult.success();
+    }
+
+    @Override
+    public ServiceResult removeTag(Long houseId, String tag) {
+        House house = houseRepository.findOne(houseId);
+        if (house == null) {
+            return ServiceResult.notFound();
+        }
+        HouseTag houseTag = houseTagRepository.findByNameAndHouseId(tag, houseId);
+        if (houseTag == null) {
+            return new ServiceResult(false, "标签已存在");
+        }
+        houseTagRepository.delete(houseTag.getId());
+        return ServiceResult.success();
+    }
+
+    @Override
+    @Transactional
+    public ServiceResult updateStatus(Long id, int value) {
+        House house = houseRepository.findOne(id);
+        if (house == null) {
+            return ServiceResult.notFound();
+        }
+
+        if (house.getStatus() == value) {
+            return new ServiceResult(false, "状态没有发生变化");
+        }
+        if (house.getStatus() == HouseStatus.RENTED.getValue()) {
+            return new ServiceResult(false, "已出租的房源不允许修改状态");
+        }
+        if (house.getStatus() == HouseStatus.DELETED.getValue()) {
+            return new ServiceResult(false, "已删除的资源不允许操作");
+        }
+        houseRepository.updateStatus(id, value);
+        return ServiceResult.success();
     }
 
     private List<HousePicture> generatePictures(HouseForm form, Long houseId) {
