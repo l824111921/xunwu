@@ -1,7 +1,7 @@
 package com.demo.security;
 
 import com.demo.entity.User;
-import com.demo.service.IUserService;
+import com.demo.service.user.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationProvider;

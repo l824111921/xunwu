@@ -5,6 +5,7 @@ import com.demo.service.ServiceResult;
 import com.demo.web.dto.HouseDTO;
 import com.demo.web.form.DatatableSearch;
 import com.demo.web.form.HouseForm;
+import com.demo.web.form.RentSearch;
 
 public interface IHouseService {
 
@@ -58,4 +59,6 @@ public interface IHouseService {
     ServiceResult removeTag(Long houseId, String tag);
 
     ServiceResult updateStatus(Long id, int value);
+
+    ServiceMultiResult<HouseDTO> query(RentSearch rentSearch);
 }

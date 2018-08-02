@@ -4,7 +4,9 @@ import com.demo.entity.Role;
 import com.demo.entity.User;
 import com.demo.repository.RoleRepository;
 import com.demo.repository.UserRepository;
-import com.demo.service.IUserService;
+import com.demo.service.ServiceResult;
+import com.demo.web.dto.UserDTO;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,6 +25,9 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @Override
     public User findUserByName(String userName) {
         User user = userRepository.findByName(userName);
@@ -37,5 +42,15 @@ public class UserServiceImpl implements IUserService {
         roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName())));
         user.setAuthorityList(authorities);
         return user;
+    }
+
+    @Override
+    public ServiceResult<UserDTO> findById(Long userId) {
+        User user = userRepository.findOne(userId);
+        if (user == null) {
+            return ServiceResult.notFound();
+        }
+        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+        return ServiceResult.of(userDTO);
     }
 }
